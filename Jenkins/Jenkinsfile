@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+    environment {
+        // Define a virtual environment directory
+        VENV = 'venv'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                // Clone the repository from Gitea
+                git branch: 'main', credentialsId: 'ccc7a6d8-9d23-4671-9edc-5d6fb3376b56', url: 'http://gitea:3000/BrayanMarin/Week3Jenkins1.git'
+            }
+        }
+
+        stage('Install python') {
+            steps {
+                sh 'apt-get update -y'
+                sh 'apt install python3-full -y'
+                sh 'apt install python3-venv -y'
+            }
+        }
+
+        stage('Setup Python Environment') {
+            steps {
+                // Create a virtual environment if it doesn't exist
+                script {
+                    if (!fileExists(VENV)) {
+                        sh 'python3 -m venv $VENV'
+                    }
+                }
+                // Install dependencies from requirements.txt
+                sh '''
+                . $VENV/bin/activate
+                pip install -r requirements.txt
+                '''
+            }
+        }
+        stage('Test with pylint') {
+            steps {
+                // Activate the virtual environment and run pylint
+                sh '''
+                . $VENV/bin/activate
+                pylint main.py unit_test.py
+                '''
+            }
+        }
+    }
+    post {
+        success {
+            echo 'The process is DONE!'
+        }
+        failure {
+            echo 'The process FAILED!'
+        }
+        always {
+            // Clean up (optional)
+            sh 'rm -rf $VENV'
+        }
+    }
+}

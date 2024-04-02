@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  gitea:
+    image: gitea/gitea:1.21.7
+      # environment:
+      #- USER_UID=1000
+      #- USER_GID=1000
+      #- TZ=America/Bogota
+    restart: always
+    networks:
+      - trainingNetwork
+      #network_mode: host
+    volumes:
+      - gitea:/data
+    ports:
+      - "3000:3000"
+      - "222:222"
+
+  jenkins:
+    image: myjenkins-blueocean:2.440.1-1
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    privileged: true
+    user: root
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - jenkins-docker-certs:/certs/client:ro
+        #network_mode: host
+    networks:
+      - trainingNetwork
+
+networks:
+  trainingNetwork:
+    external: true
+
+volumes:
+  jenkins-data:
+    external: true
+  gitea:
+    external: true
+  jenkins-docker-certs:
